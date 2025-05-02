@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+    <div class="bg-green-600 p-6 text-center text-white">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <h1 class="text-3xl font-bold mb-2">Booking Confirmed!</h1>
+        <p class="text-xl">Thank you for your booking</p>
+    </div>
+
+    <div class="p-6">
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold mb-4">Booking Details</h2>
+            <div class="space-y-4">
+                <div class="flex justify-between border-b pb-2">
+                    <span class="font-medium">Event:</span>
+                    <span>{{ booking.event.title }}</span>
+                </div>
+                <div class="flex justify-between border-b pb-2">
+                    <span class="font-medium">Date:</span>
+                    <span>{{ booking.event.date|date:"F d, Y H:i" }}</span>
+                </div>
+                <div class="flex justify-between border-b pb-2">
+                    <span class="font-medium">Venue:</span>
+                    <span>{{ booking.event.venue.name }}</span>
+                </div>
+                <div class="flex justify-between border-b pb-2">
+                    <span class="font-medium">Booking Reference:</span>
+                    <span class="font-mono">#{{ booking.id }}</span>
+                </div>
+                <div class="flex justify-between border-b pb-2">
+                    <span class="font-medium">Booking Date:</span>
+                    <span>{{ booking.booking_date|date:"F d, Y H:i" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold mb-4">Seat Information</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for seat in seats %}
+                <div class="border rounded-lg p-3 {% if seat.seat_type == 'standard' %}border-blue-200 bg-blue-50
+                                                          {% elif seat.seat_type == 'premium' %}border-yellow-200 bg-yellow-50
+                                                          {% elif seat.seat_type == 'vip' %}border-purple-200 bg-purple-50
+                                                          {% else %}border-green-200 bg-green-50{% endif %}">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <span class="font-bold text-lg">{{ seat.seat_number }}</span>
+                            <span class="block text-sm capitalize">{{ seat.get_seat_type_display }} Seat</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="block font-bold">
+                                {% if seat.seat_type == 'standard' %}{{ booking.event.base_price }} TND
+                                {% elif seat.seat_type == 'premium' %}{{ booking.event.premium_price }}
+                                {% elif seat.seat_type == 'vip' %}{{ booking.event.vip_price }}
+                                {% else %}{{ booking.event.disabled_price }}{% endif %}
+                            </span>
+                            <span class="text-sm">Row {{ seat.row }}, {{ seat.section }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="bg-gray-50 p-4 rounded-lg">
+            <div class="flex justify-between items-center">
+                <span class="text-lg font-bold">Total Paid:</span>
+                <span class="text-2xl font-bold text-green-600">{{ booking.total_price }} TND</span>
+            </div>
+        </div>
+
+        <div class="mt-8 bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <h3 class="font-bold text-blue-800 mb-2"><i class="fas fa-info-circle mr-2"></i>Important Information</h3>
+            <p class="text-blue-700">Your e-tickets will be sent to your email address. Please bring a valid ID and this
+                booking reference when attending the event.</p>
+        </div>
+
+        <div class="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+            <a href="{% url 'event_list' %}"
+                class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-center">
+                <i class="fas fa-calendar-alt mr-2"></i>
+                Browse More Events
+            </a>
+            <a href="{% url 'my_bookings' %}"
+                class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 text-center">
+                <i class="fas fa-ticket-alt mr-2"></i>
+                View All Bookings
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

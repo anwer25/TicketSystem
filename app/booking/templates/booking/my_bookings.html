@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">My Bookings</h1>
+
+    {% if bookings %}
+    <div class="space-y-6">
+        {% for booking in bookings %}
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="p-6">
+                <div class="flex flex-col md:flex-row md:justify-between md:items-start mb-4">
+                    <div class="mb-4 md:mb-0">
+                        <h2 class="text-xl font-bold">{{ booking.event.title }}</h2>
+                        <p class="text-gray-600">
+                            <i class="far fa-calendar-alt mr-1"></i>
+                            {{ booking.event.date|date:"F d, Y H:i" }}
+                        </p>
+                        <p class="text-gray-600">
+                            <i class="fas fa-map-marker-alt mr-1"></i>
+                            {{ booking.event.venue.name }}
+                        </p>
+                    </div>
+                    <div class="flex flex-col items-end">
+                        <span class="text-lg font-bold text-green-600 mb-2">
+                            {{ booking.total_price }} TND
+                        </span>
+                        <span class="text-sm text-gray-500">
+                            Booked on {{ booking.booking_date|date:"F d, Y" }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h3 class="font-bold mb-2">Seats:</h3>
+                    <div class="flex flex-wrap gap-2">
+                        {% for seat in booking.seats.all %}
+                        <span class="px-3 py-1 rounded-full text-sm 
+                                            {% if seat.seat_type == 'standard' %}bg-blue-100 text-blue-800
+                                            {% elif seat.seat_type == 'premium' %}bg-yellow-100 text-yellow-800
+                                            {% elif seat.seat_type == 'vip' %}bg-purple-100 text-purple-800
+                                            {% else %}bg-green-100 text-green-800{% endif %}">
+                            {{ seat.seat_number }} ({{ seat.get_seat_type_display }})
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center pt-4 border-t">
+                    <span class="text-sm font-medium">
+                        Booking Reference: #{{ booking.id }}
+                    </span>
+                    <div class="space-x-2">
+                        <a href="{% url 'booking_confirmation' booking.id %}"
+                            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
+                            View Details
+                        </a>
+                        <a href="{% url 'cancel_booking' booking.id %}"
+                            class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm">
+                            Cancel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-lg shadow-md p-8 text-center">
+        <i class="fas fa-ticket-alt text-5xl text-gray-400 mb-4"></i>
+        <h3 class="text-xl font-bold mb-2">No Bookings Found</h3>
+        <p class="text-gray-600 mb-4">You haven't made any bookings yet.</p>
+        <a href="{% url 'event_list' %}"
+            class="inline-block bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+            Browse Events
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

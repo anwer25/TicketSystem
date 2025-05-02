@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">Book Seats for {{ event.title }}</h1>
+
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Seating Plan -->
+        <div class="lg:w-2/3">
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold">Seating Plan</h2>
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-blue-500 rounded-full mr-2"></div>
+                            <span class="text-sm">Standard</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-yellow-400 rounded-full mr-2"></div>
+                            <span class="text-sm">Premium</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-purple-500 rounded-full mr-2"></div>
+                            <span class="text-sm">VIP</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
+                            <span class="text-sm">Disabled</span>
+                        </div>
+                    </div>
+                </div>
+
+                {% if event.venue.seating_plan %}
+                <div class="relative border-2 border-gray-300 rounded-lg overflow-hidden mb-4"
+                    style="height: 600px; background-image: url('{{ event.venue.seating_plan.url }}'); background-size: contain; background-repeat: no-repeat; background-position: center;">
+                    {% for seat in available_seats %}
+                    <button type="button" class="absolute w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold cursor-pointer seat-button 
+                                               {% if seat.seat_type == 'standard' %}bg-blue-500 text-white
+                                               {% elif seat.seat_type == 'premium' %}bg-yellow-400
+                                               {% elif seat.seat_type == 'vip' %}bg-purple-500 text-white
+                                               {% else %}bg-green-500 text-white{% endif %}"
+                        style="left: {{ seat.x_coord }}%; top: {{ seat.y_coord }}%;" data-seat-id="{{ seat.id }}"
+                        data-seat-type="{{ seat.seat_type }}" data-seat-number="{{ seat.seat_number }}" data-seat-price="
+                                            {% if seat.seat_type == 'standard' %}{{ event.base_price }}
+                                            {% elif seat.seat_type == 'premium' %}{{ event.premium_price }}
+                                            {% elif seat.seat_type == 'vip' %}{{ event.vip_price }}
+                                            {% else %}{{ event.disabled_price }}{% endif %}" title="{{ seat.seat_number }} ({{ seat.get_seat_type_display }}) - 
+                                               ${% if seat.seat_type == 'standard' %}{{ event.base_price }}
+                                               {% elif seat.seat_type == 'premium' %}{{ event.premium_price }}
+                                               {% elif seat.seat_type == 'vip' %}{{ event.vip_price }}
+                                               {% else %}{{ event.disabled_price }}{% endif %}">
+                        {{ seat.seat_number }}
+                    </button>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="bg-gray-100 p-8 text-center rounded-lg">
+                    <i class="fas fa-chair text-5xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-600">No seating plan available for this venue.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Booking Summary -->
+        <div class="lg:w-1/3">
+            <div class="bg-white p-6 rounded-lg shadow-md sticky top-4">
+                <form method="post" id="booking-form">
+                    {% csrf_token %}
+
+                    <h2 class="text-xl font-bold mb-4">Booking Summary</h2>
+
+                    <div class="mb-6">
+                        <h3 class="font-bold mb-2">Selected Seats</h3>
+                        <div id="selected-seats" class="space-y-2 max-h-60 overflow-y-auto p-2 border rounded">
+                            <p class="text-gray-500 text-center py-4">No seats selected yet</p>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <h3 class="font-bold mb-2">Price Breakdown</h3>
+                        <div id="price-breakdown" class="space-y-2">
+                            <div class="flex justify-between">
+                                <span>Standard Seats ({{ event.base_price }} each):</span>
+                                <span><span id="standard-price">0.00</span>TND</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Premium Seats ({{ event.premium_price }} each):</span>
+                                <span><span id="premium-price">0.00</span></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>VIP Seats ({{ event.vip_price }} each):</span>
+                                <span><span id="vip-price">0.00</span></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Disabled Seats ({{ event.disabled_price }} each):</span>
+                                <span><span id="disabled-price">0.00</span></span>
+                            </div>
+                            <div class="border-t border-gray-300 pt-2 mt-2 font-bold flex justify-between">
+                                <span>Total:</span>
+                                <span><span id="total-price">0.00</span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="seats" id="selected-seats-input">
+
+                    <button type="submit"
+                        class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 font-bold disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                        id="submit-button" disabled>
+                        <i class="fas fa-check-circle mr-2"></i>
+                        Confirm Booking
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const seatButtons = document.querySelectorAll('.seat-button');
+        const selectedSeatsDiv = document.getElementById('selected-seats');
+        const selectedSeatsInput = document.getElementById('selected-seats-input');
+        const submitButton = document.getElementById('submit-button');
+
+        const standardPriceEl = document.getElementById('standard-price');
+        const premiumPriceEl = document.getElementById('premium-price');
+        const vipPriceEl = document.getElementById('vip-price');
+        const disabledPriceEl = document.getElementById('disabled-price');
+        const totalPriceEl = document.getElementById('total-price');
+
+        let selectedSeats = [];
+
+        seatButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                const seatId = this.getAttribute('data-seat-id');
+                const seatType = this.getAttribute('data-seat-type');
+                const seatNumber = this.getAttribute('data-seat-number');
+                const seatPrice = parseFloat(this.getAttribute('data-seat-price'));
+
+                if (selectedSeats.some(seat => seat.id === seatId)) {
+                    // Deselect seat
+                    selectedSeats = selectedSeats.filter(seat => seat.id !== seatId);
+                    this.classList.remove('ring-4', 'ring-green-500', 'ring-opacity-70');
+                } else {
+                    // Select seat
+                    selectedSeats.push({
+                        id: seatId,
+                        type: seatType,
+                        number: seatNumber,
+                        price: seatPrice
+                    });
+                    this.classList.add('ring-4', 'ring-green-500', 'ring-opacity-70');
+                }
+
+                updateSelectedSeatsDisplay();
+                updatePriceSummary();
+                updateForm();
+            });
+        });
+
+        function updateSelectedSeatsDisplay() {
+            if (selectedSeats.length === 0) {
+                selectedSeatsDiv.innerHTML = '<p class="text-gray-500 text-center py-4">No seats selected yet</p>';
+                return;
+            }
+
+            let html = '<div class="space-y-2">';
+
+            selectedSeats.forEach(seat => {
+                html += `
+                        <div class="flex justify-between items-center bg-gray-50 p-2 rounded border">
+                            <div>
+                                <span class="font-medium">${seat.number}</span>
+                                <span class="text-sm text-gray-600 ml-2 capitalize">(${seat.type})</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="font-medium mr-4">$${seat.price.toFixed(2)}</span>
+                                <button type="button" 
+                                        class="text-red-500 hover:text-red-700 text-sm"
+                                        data-seat-id="${seat.id}">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+            });
+
+            html += '</div>';
+            selectedSeatsDiv.innerHTML = html;
+
+            // Add event listeners to remove buttons
+            document.querySelectorAll('#selected-seats button').forEach(button => {
+                button.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    const seatId = this.getAttribute('data-seat-id');
+                    selectedSeats = selectedSeats.filter(seat => seat.id !== seatId);
+
+                    // Update seat button styling
+                    const seatButton = document.querySelector(`.seat-button[data-seat-id="${seatId}"]`);
+                    if (seatButton) {
+                        seatButton.classList.remove('ring-4', 'ring-green-500', 'ring-opacity-70');
+                    }
+
+                    updateSelectedSeatsDisplay();
+                    updatePriceSummary();
+                    updateForm();
+                });
+            });
+        }
+
+        function updatePriceSummary() {
+            let standardTotal = 0;
+            let premiumTotal = 0;
+            let vipTotal = 0;
+            let disabledTotal = 0;
+
+            selectedSeats.forEach(seat => {
+                if (seat.type === 'standard') standardTotal += seat.price;
+                else if (seat.type === 'premium') premiumTotal += seat.price;
+                else if (seat.type === 'vip') vipTotal += seat.price;
+                else if (seat.type === 'disabled') disabledTotal += seat.price;
+            });
+
+            const total = standardTotal + premiumTotal + vipTotal + disabledTotal;
+
+            standardPriceEl.textContent = standardTotal.toFixed(2);
+            premiumPriceEl.textContent = premiumTotal.toFixed(2);
+            vipPriceEl.textContent = vipTotal.toFixed(2);
+            disabledPriceEl.textContent = disabledTotal.toFixed(2);
+            totalPriceEl.textContent = total.toFixed(2);
+        }
+
+        function updateForm() {
+            selectedSeatsInput.value = selectedSeats.map(seat => seat.id).join(',');
+            submitButton.disabled = selectedSeats.length === 0;
+        }
+    });
+</script>
+{% endblock %}

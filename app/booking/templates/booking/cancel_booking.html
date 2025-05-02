@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+    <div class="bg-red-600 p-6 text-center text-white">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <h1 class="text-2xl font-bold mb-2">Cancel Booking</h1>
+        <p class="text-lg">Are you sure you want to cancel this booking?</p>
+    </div>
+
+    <div class="p-6">
+        <div class="mb-6">
+            <h2 class="text-xl font-bold mb-2">Booking Details</h2>
+            <div class="space-y-2">
+                <div class="flex justify-between">
+                    <span class="font-medium">Event:</span>
+                    <span>{{ booking.event.title }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-medium">Date:</span>
+                    <span>{{ booking.event.date|date:"F d, Y H:i" }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-medium">Seats:</span>
+                    <span>
+                        {% for seat in booking.seats.all %}
+                        {{ seat.seat_number }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-medium">Total:</span>
+                    <span>{{ booking.total_price }} TND</span>
+                </div>
+            </div>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="flex justify-between space-x-4">
+                <a href="{% url 'my_bookings' %}"
+                    class="flex-1 bg-gray-300 text-gray-800 py-2 rounded text-center hover:bg-gray-400">
+                    Go Back
+                </a>
+                <button type="submit" class="flex-1 bg-red-600 text-white py-2 rounded hover:bg-red-700">
+                    Confirm Cancellation
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

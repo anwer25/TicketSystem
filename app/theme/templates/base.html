@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>{% block title %}Ticket Booking System{% endblock %}</title>
+	{% load static tailwind_tags %}
+	{% tailwind_css %}
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body class="bg-gray-50">
+	<nav class="bg-blue-600 text-white shadow-lg">
+		<div class="container mx-auto px-4 py-3 flex justify-between items-center">
+			<a href="{% url 'event_list' %}" class="text-2xl font-bold flex items-center">
+				<i class="fas fa-ticket-alt mr-2"></i>
+				TicketSystem
+			</a>
+			<div class="flex space-x-6">
+				{% if user.is_authenticated %}
+				<a href="{% url 'my_bookings' %}" class="hover:underline flex items-center">
+					<i class="fas fa-calendar-check mr-1"></i>
+					My Bookings
+				</a>
+				<a href="{% url 'logout' %}" class="hover:underline flex items-center">
+					<i class="fas fa-sign-out-alt mr-1"></i>
+					Logout
+				</a>
+				{% else %}
+				<a href="{% url 'login' %}" class="hover:underline flex items-center">
+					<i class="fas fa-sign-in-alt mr-1"></i>
+					Login
+				</a>
+				<a href="{% url 'register' %}" class="hover:underline flex items-center">
+					<i class="fas fa-user-plus mr-1"></i>
+					Register
+				</a>
+				{% endif %}
+			</div>
+		</div>
+	</nav>
+
+	<main class="container mx-auto px-4 py-8">
+		{% if messages %}
+		{% for message in messages %}
+		<div
+			class="mb-6 p-4 rounded-md {% if message.tags == 'success' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+			{{ message }}
+		</div>
+		{% endfor %}
+		{% endif %}
+
+		{% block content %}
+		{% endblock %}
+	</main>
+
+	<footer class="bg-gray-800 text-white py-6 mt-12">
+		<div class="container mx-auto px-4">
+			<div class="flex flex-col md:flex-row justify-between items-center">
+				<div class="mb-4 md:mb-0">
+					<h3 class="text-xl font-bold mb-2">TicketSystem</h3>
+					<p class="text-gray-400">Your one-stop for event tickets</p>
+				</div>
+				<div class="flex space-x-4">
+					<a href="#" class="hover:text-blue-400"><i class="fab fa-facebook-f"></i></a>
+					<a href="#" class="hover:text-blue-400"><i class="fab fa-twitter"></i></a>
+					<a href="#" class="hover:text-blue-400"><i class="fab fa-instagram"></i></a>
+				</div>
+			</div>
+			<div class="border-t border-gray-700 mt-6 pt-6 text-center text-gray-400">
+				&copy; {% now "Y" %} Ticket Booking System. All rights reserved.
+			</div>
+		</div>
+	</footer>
+
+	<script src="{% static 'js/seat_selection.js' %}"></script>
+</body>
+
+</html>
